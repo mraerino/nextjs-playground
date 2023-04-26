@@ -66,6 +66,7 @@ interface RuleParams {
   params?: Record<string, string>;
   status?: number;
   conditions?: Constraints;
+  exceptions?: Constraints;
 }
 
 type Rule = (
@@ -139,7 +140,9 @@ const convertRule = <RW extends boolean>(
   rules: NextJS.Rewrite[] | NextJS.Redirect[]
 ): Rule[] => {
   return rules.flatMap((r) => {
-    const [conditions, params, hosts] = convertConstraints(r.has ?? []); // todo: support for `missing`
+    const [conditions, params, hosts] = convertConstraints(r.has ?? []);
+    // todo: what do we do with negative query params or hosts?
+    const [exceptions] = convertConstraints(r.missing ?? []);
     const regex = transformRegex(r.regex, r.source);
     let status = 200;
     if ("statusCode" in r) {
@@ -152,6 +155,7 @@ const convertRule = <RW extends boolean>(
       to: r.destination,
       status,
       conditions,
+      exceptions,
       params,
     }));
   });
