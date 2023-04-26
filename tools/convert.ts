@@ -9,7 +9,7 @@ import { generate as generateRegex } from "regjsgen";
 
 import type * as NextJS from "./nextjs";
 
-type Condition =
+type Constraint =
   | "Country"
   | "Language"
   | "Role"
@@ -57,7 +57,7 @@ const transformRegex = (regex: string, destination: string): string => {
   return generateRegex(ast);
 };
 
-type Conditions = Partial<Record<Condition, string | string[]>>;
+type Constraints = Partial<Record<Constraint, string | string[]>>;
 
 interface RuleParams {
   scheme?: "http" | "https";
@@ -65,7 +65,7 @@ interface RuleParams {
   to: string;
   params?: Record<string, string>;
   status?: number;
-  conditions?: Conditions;
+  conditions?: Constraints;
 }
 
 type Rule = (
@@ -83,14 +83,14 @@ interface RuleSet {
   preCache?: Rule[];
 }
 
-const convertConditions = (
+const convertConstraints = (
   has: NextJS.Condition[]
 ): [
-  Conditions | undefined,
+  Constraints | undefined,
   Record<string, string> | undefined,
   string[] | undefined
 ] => {
-  let conds: Partial<Record<Condition, string[]>> | undefined;
+  let conds: Partial<Record<Constraint, string[]>> | undefined;
   let params: Record<string, string> | undefined;
   let hosts: string[] | undefined;
 
@@ -139,7 +139,7 @@ const convertRule = <RW extends boolean>(
   rules: NextJS.Rewrite[] | NextJS.Redirect[]
 ): Rule[] => {
   return rules.flatMap((r) => {
-    const [conditions, params, hosts] = convertConditions(r.has ?? []); // todo: support for `missing`
+    const [conditions, params, hosts] = convertConstraints(r.has ?? []); // todo: support for `missing`
     const regex = transformRegex(r.regex, r.source);
     let status = 200;
     if ("statusCode" in r) {
